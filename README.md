@@ -163,5 +163,5 @@ python3 /bot/start.py
 
 <a id="A6"></a>
 ## Пожертвования
-Вы можете поддержать этот или другие проекты.
+Вы можете поддержать на этот или другие проекты.
 [![Donate](https://img.shields.io/badge/donate-Yandex-red.svg)](https://yoomoney.ru/fundraise/b8GYBARCVRE.230309)
