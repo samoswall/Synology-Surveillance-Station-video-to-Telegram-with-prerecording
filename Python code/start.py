@@ -12,12 +12,12 @@ token = script_config.token
 syno_ip = script_config.syno_ip
 synohook_port = script_config.synohook_port
 syno_url = 'http://' + syno_ip + ':5000/webapi/entry.cgi'
-syno_sid = script_config.syno_sid
 old_last_video_id = '0'
 video_offset = 0
 
 with open("/bot/syno_cam_config.json") as f:
     cam_load = json.load(f)
+syno_sid = cam_load['SynologyAuthSid']
     
 def get_last_id_video(cam_id):
     take_video_id = requests.get(syno_url,
