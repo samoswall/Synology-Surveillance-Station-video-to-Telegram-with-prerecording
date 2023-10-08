@@ -7,6 +7,7 @@ The first video with pre-recording the rest until the end of motion detection ev
 ![](https://img.shields.io/github/watchers/samoswall/Synology-Surveillance-Station-video-to-Telegram-with-prerecording.svg)
 ![](https://img.shields.io/github/stars/samoswall/Synology-Surveillance-Station-video-to-Telegram-with-prerecording.svg)
 <!-- ![](https://img.shields.io/github/downloads/samoswall/Synology-Surveillance-Station-video-to-Telegram-with-prerecording/total.svg) -->
+[![RU](https://img.shields.io/badge/lang-RU-green.svg)](/README.md)
 
 ![](https://badgen.net/static/API/Telegram)
 ![](https://badgen.net/static/API/Synology%20Surveillance%20Station)
