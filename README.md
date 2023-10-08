@@ -7,6 +7,7 @@
 ![](https://img.shields.io/github/watchers/samoswall/Synology-Surveillance-Station-video-to-Telegram-with-prerecording.svg)
 ![](https://img.shields.io/github/stars/samoswall/Synology-Surveillance-Station-video-to-Telegram-with-prerecording.svg)
 <!-- ![](https://img.shields.io/github/downloads/samoswall/Synology-Surveillance-Station-video-to-Telegram-with-prerecording/total.svg) -->
+[![EN](https://img.shields.io/badge/lang-EN-green.svg)](/README.en.md)
 
 ![](https://badgen.net/static/API/Telegram)
 ![](https://badgen.net/static/API/Synology%20Surveillance%20Station)
