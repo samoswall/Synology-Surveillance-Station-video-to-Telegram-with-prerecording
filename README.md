@@ -1,6 +1,8 @@
-[![Donate](https://img.shields.io/badge/donate-Yandex-red.svg)](https://yoomoney.ru/fundraise/b8GYBARCVRE.230309)
+![](/images/4logo.png)
 # Synology-Surveillance-Station-video-to-Telegram-with-prerecording
 Отправка видео с предзаписью по детектору движения Synology Surveillance Station в Telegram используя Webhook автоматизации действий
+
+[![Donate](https://img.shields.io/badge/donate-Yandex-red.svg)](https://yoomoney.ru/fundraise/b8GYBARCVRE.230309)
 
 ## Установка Docker с Python
 
