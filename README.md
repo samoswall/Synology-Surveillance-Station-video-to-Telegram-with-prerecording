@@ -9,8 +9,8 @@
 <!-- ![](https://img.shields.io/github/downloads/samoswall/Synology-Surveillance-Station-video-to-Telegram-with-prerecording/total.svg) -->
 
 ![](https://badgen.net/static/API/Telegram)
-![](https://badgen.net/static/API/Synology-Surveillance-Station)
-![](https://badgen.net/static/Made-with/Python)
+![](https://badgen.net/static/API/Synology%20Surveillance%20Station)
+![](https://badgen.net/static/Made%20with/Python)
 
 ## Содержание
 - [Установка Docker с Python](#A1)
