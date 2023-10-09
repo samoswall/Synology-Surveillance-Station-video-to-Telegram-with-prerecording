@@ -163,7 +163,8 @@ python3 /bot/start.py
 <a id="A5"></a>
 ## Problematic issues
 - [ ] Autorun of the script after restarting Synology has not yet been implemented. (I'm studying how to implement it).
-- [ ] It is possible that the script behaves incorrectly when motion is detected simultaneously on several cameras with a duration of more than 10 seconds. The solution to the problem is known, but requires a 2nd video camera for the test. (there is still one available) I will eliminate it in the near future.
+- [X] Fixed! (Incorrect behavior of the script when motion is detected simultaneously on several cameras with a duration of more than 10 seconds.)
+      Testing is required on 2 video cameras. (there is one available so far).
 - [ ] Sending videos to multiple chats using a link to the Telegram ID file after sending to the first chat. (the video is uploaded 1 time, the rest receive the video via a link on the Telegram server). Tested, will be implemented.
 - [ ] Connecting the Telegram bot to enable/disable the Home mode Surveillance Station and other functions.
 - [ ] Surveillance Station is able to broadcast video in Life mode, but I haven't figured out yet with Telegram how it can be used.
