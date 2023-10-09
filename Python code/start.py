@@ -12,13 +12,16 @@ token = script_config.token
 syno_ip = script_config.syno_ip
 synohook_port = script_config.synohook_port
 syno_url = 'http://' + syno_ip + ':5000/webapi/entry.cgi'
-old_last_video_id = '0'
-video_offset = 0
+arr_cam_move = {}
 
 with open("/bot/syno_cam_config.json") as f:
     cam_load = json.load(f)
 syno_sid = cam_load['SynologyAuthSid']
-    
+
+for i in cam_load:
+   arr_cam_move[i] = {'old_last_video_id': '0', 'video_offset': '0'}
+del arr_cam_move['SynologyAuthSid']
+
 def get_last_id_video(cam_id):
     take_video_id = requests.get(syno_url,
         params={'version': '6', 'cameraIds': cam_id, 'api': 'SYNO.SurveillanceStation.Recording',
@@ -54,29 +57,24 @@ def get_alarm_camera_state(cam_id):
     return 1 if alarm_state == '1' else 0
 
 
-
-
-
-
 app = Flask(__name__)
 
 @app.route('/webhookcam', methods=['POST'])
 def webhookcam():
-    global old_last_video_id
-    global video_offset
+    global arr_cam_move
     if request.method == 'POST':
        cam_id = request.json['idcam']
        print("Received IDCam:", cam_id, ',', time.strftime("%d.%m.%Y, %H:%M:%S", time.localtime()))
        time.sleep(5)
        last_video_id = get_last_id_video(cam_id)
-       if last_video_id != old_last_video_id:
+       if last_video_id != arr_cam_move[cam_id]['old_last_video_id']:
            get_last_video(last_video_id, '0')
            send_cammessage(cam_id)
-           old_last_video_id = last_video_id
-           video_offset = 0
+           arr_cam_move[cam_id]['old_last_video_id'] = last_video_id
+           arr_cam_move[cam_id]['video_offset'] = 0
        else:
-           video_offset += 10000
-           get_last_video(last_video_id, str(video_offset))
+           arr_cam_move[cam_id]['video_offset'] += 10000
+           get_last_video(last_video_id, str(arr_cam_move[cam_id]['video_offset']))
        send_camvideo('/bot/temp.mp4')
        return 'success', 200
     else:
