@@ -1,20 +1,115 @@
-import script_config
-import telebot
-import requests
+import pathlib
 import time
 import os
 import json
-from flask import Flask, request, abort
+import subprocess
+import sys
+import importlib.util
 
-chat_id = script_config.chat_id
-token = script_config.token
+#import requests
+#import telebot
+#from flask import Flask, request, abort
 
-syno_ip = script_config.syno_ip
-synohook_port = script_config.synohook_port
+# Auto pip install ----------------------------------------------------------------------------------------
+try:
+    import telebot
+    print('The telebot module is installed')
+except ModuleNotFoundError:
+    print('The telebot module is NOT installed')
+    print('The telebot module is Installing...')
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'telebot'], stdout=subprocess.DEVNULL)
+finally:
+    import telebot
+#----------
+try:
+    from flask import Flask, request, abort
+    print('The flask module is installed')
+except ModuleNotFoundError:
+    print('The flask module is NOT installed')
+    print('The flask module is Installing...')
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'flask'], stdout=subprocess.DEVNULL)
+finally:
+    from flask import Flask, request, abort
+#----------
+try:
+    import requests
+    print('The requests module is installed')
+except ModuleNotFoundError:
+    print('The requests module is NOT installed')
+    print('The requests module is Installing...')
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'requests'], stdout=subprocess.DEVNULL)
+finally:
+    import requests
+#----------------------------------------------------------------------------------------------------------
+
+chat_id = os.environ['TG_CHAT_ID']
+token = os.environ['TG_TOKEN']
+
+syno_ip = os.environ['SYNO_IP']
+synohook_port = os.environ['SYNOHOOK_PORT']
 syno_url = 'http://' + syno_ip + ':5000/webapi/entry.cgi'
+syno_login = os.environ['SYNO_LOGIN']
+syno_pass = os.environ['SYNO_PASS']
+syno_otp = os.environ['SYNO_OTP']
+
+config_file = '/bot/syno_cam_config.json'
 arr_cam_move = {}
 
-with open("/bot/syno_cam_config.json") as f:
+def firstStart():
+    # With OTP code
+    if syno_otp != '0':
+        sid = requests.get(syno_url,
+            params={'api': 'SYNO.API.Auth', 'version': '7', 'method': 'login',
+                    'account': syno_login, 'passwd': syno_pass, 'otp_code': syno_otp,
+                    'session': 'SurveillanceStation', 'format': 'cookie12'}).json()['data']['sid']
+    # Without OTP code
+    else:
+        sid = requests.get(syno_url,
+            params={'api': 'SYNO.API.Auth', 'version': '7', 'method': 'login',
+                    'account': syno_login, 'passwd': syno_pass,
+                    'session': 'SurveillanceStation', 'format': 'cookie12'}).json()['data']['sid']
+    print(sid)            
+    # Cameras config
+    cameras = requests.get(syno_url,
+        params={'api': 'SYNO.SurveillanceStation.Camera',
+                '_sid': sid, 'version': '9', 'method': 'List'}).json()
+    data = {}
+    cam_conf_text = ""
+    for i in range(len(cameras['data']['cameras'])):
+        data[cameras['data']['cameras'][i]['id']] = {'CamId': cameras['data']['cameras'][i]['id'],
+                                                        'IP': cameras['data']['cameras'][i]['ip'],
+                                                  'SynoName': cameras['data']['cameras'][i]['newName'],
+                                                     'Model': cameras['data']['cameras'][i]['model'],
+                                                    'Vendor': cameras['data']['cameras'][i]['vendor']}
+        cam_conf_text += ('CamId: ' + str(cameras['data']['cameras'][i]['id'])
+                        + ' IP: ' + cameras['data']['cameras'][i]['ip']
+                        + ' SynoName: ' + cameras['data']['cameras'][i]['newName']
+                        + ' Model: ' + cameras['data']['cameras'][i]['model']
+                        + ' Vendor: ' + cameras['data']['cameras'][i]['vendor'] + '%0A')
+    print(cam_conf_text)
+    data['SynologyAuthSid'] = sid
+
+    with open(config_file, "w") as f:
+        json.dump(data, f)
+    print("Config saved successfully.")
+    # Send Telegram Cameras config
+    mycaption = "Cameras config:%0A" + cam_conf_text
+    requests.post(f"https://api.telegram.org/{token}/sendMessage?chat_id={chat_id}&text={mycaption}")
+
+
+if not pathlib.Path(config_file).is_file():
+    print('Not Found Syno config, need create')
+    firstStart()
+
+if pathlib.Path(config_file).stat().st_size == 0:
+    print('Syno config is empty.')
+    firstStart()
+
+if pathlib.Path(config_file).stat().st_size == 0:
+    print('Syno config always is empty. Exit.')
+    sys.exit()
+
+with open(config_file) as f:
     cam_load = json.load(f)
 syno_sid = cam_load['SynologyAuthSid']
 
@@ -55,7 +150,6 @@ def get_alarm_camera_state(cam_id):
                 'method': 'OneTime', '_sid': syno_sid}).json()['data']['CamStatus']
     alarm_state = take_alarm.replace("[", "").replace("]", "").split()[7]
     return 1 if alarm_state == '1' else 0
-
 
 app = Flask(__name__)
 
