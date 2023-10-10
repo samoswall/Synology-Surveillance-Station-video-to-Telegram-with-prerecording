@@ -92,7 +92,7 @@ def send_camvideo(videofile, cam_id):
 
 def firstStart():
     # With OTP code
-    if 'syno_otp' in locals():
+    if 'SYNO_OTP' in os.environ:
         sid = requests.get(syno_url,
             params={'api': 'SYNO.API.Auth', 'version': '7', 'method': 'login',
                     'account': syno_login, 'passwd': syno_pass, 'otp_code': syno_otp,
@@ -195,4 +195,5 @@ def webhookcam():
        return 'success', 200
     else:
        abort(400)
-       
+if __name__ == '__main__':
+   app.run(host='0.0.0.0', port='7878')        
