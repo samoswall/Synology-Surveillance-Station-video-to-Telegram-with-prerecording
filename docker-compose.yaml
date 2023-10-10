@@ -1,0 +1,18 @@
+version: "3"
+services:
+  yacht:
+    container_name: VideoSsToTg
+    restart: unless-stopped
+    ports:
+      - 7878:7878
+    environment:
+      - "TG_CHAT_ID=123456" #id чата, куда отправлять уведомления
+      - "TG_TOKEN=1234567890:AAAAAAbbbbbbCCCC1234567890abcdefgh" #токен бота, полученного от https://t.me/BotFather
+      - "SYNO_IP=192.168.1.1" #ip DSM
+      - "SYNO_PORT=5000" #Порт веб-морды DSM
+      - "SYNO_LOGIN=login" #логин
+      - "SYNO_PASS=password" #пароль
+      - "SYNO_OTP=123" #ОТР код двухфакторной авторизации, если используете. Если нет - удалить.
+    volumes:
+      - /home/test/:/bot #/home/test/ - меняем на свой путь, где будет хранится конфиг с камерами
+    image: striker72rus/ss_to_tg_video:latest
