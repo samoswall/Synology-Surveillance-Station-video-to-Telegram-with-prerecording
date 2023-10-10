@@ -4,60 +4,95 @@ import os
 import json
 import subprocess
 import sys
-import importlib.util
+import logging
 
-#import requests
-#import telebot
-#from flask import Flask, request, abort
+py_formatter = logging.Formatter("%(asctime)s - [%(levelname)s] -  %(name)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s")
+log = logging.getLogger(__name__)
+sh = logging.StreamHandler(sys.stdout)
+sh.setFormatter(py_formatter)
+log.addHandler(sh)
+log.setLevel(logging.DEBUG)
 
 # Auto pip install ----------------------------------------------------------------------------------------
 try:
     import telebot
-    print('The telebot module is installed')
+    log.info('The telebot module is installed')
 except ModuleNotFoundError:
-    print('The telebot module is NOT installed')
-    print('The telebot module is Installing...')
+    log.info('The telebot module is NOT installed')
+    log.info('The telebot module is Installing...')
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'telebot'], stdout=subprocess.DEVNULL)
 finally:
     import telebot
 #----------
 try:
     from flask import Flask, request, abort
-    print('The flask module is installed')
+    log.info('The flask module is installed')
 except ModuleNotFoundError:
-    print('The flask module is NOT installed')
-    print('The flask module is Installing...')
+    log.info('The flask module is NOT installed')
+    log.info('The flask module is Installing...')
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'flask'], stdout=subprocess.DEVNULL)
 finally:
     from flask import Flask, request, abort
 #----------
 try:
     import requests
-    print('The requests module is installed')
+    log.info('The requests module is installed')
 except ModuleNotFoundError:
-    print('The requests module is NOT installed')
-    print('The requests module is Installing...')
+    log.info('The requests module is NOT installed')
+    log.info('The requests module is Installing...')
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'requests'], stdout=subprocess.DEVNULL)
 finally:
     import requests
 #----------------------------------------------------------------------------------------------------------
 
+#validate
+if 'TG_CHAT_ID' not in os.environ:
+    log.info('TG_CHAT_ID does not exist. Please configurate environment')
+    sys.exit()
+if 'TG_TOKEN' not in os.environ:
+    log.info('TG_TOKEN does not exist. Please configurate environment')
+    sys.exit()
+if 'SYNO_IP' not in os.environ:
+    log.info('SYNO_IP does not exist. Please configurate environment')
+    sys.exit()
+if 'SYNO_PORT' not in os.environ:
+    log.info('SYNO_PORT does not exist. Please configurate environment')
+    sys.exit()
+if 'SYNO_LOGIN' not in os.environ:
+    log.info('SYNO_LOGIN does not exist. Please configurate environment')
+    sys.exit()
+if 'SYNO_PASS' not in os.environ:
+    log.info('SYNO_PASS does not exist. Please configurate environment')
+    sys.exit()
+
 chat_id = os.environ['TG_CHAT_ID']
 token = os.environ['TG_TOKEN']
 
+tg_bot = telebot.TeleBot(token)
+
 syno_ip = os.environ['SYNO_IP']
-synohook_port = os.environ['SYNOHOOK_PORT']
-syno_url = 'http://' + syno_ip + ':5000/webapi/entry.cgi'
+syno_url = 'http://' + syno_ip + ':' + os.environ['SYNO_PORT'] + '/webapi/entry.cgi'
 syno_login = os.environ['SYNO_LOGIN']
 syno_pass = os.environ['SYNO_PASS']
-syno_otp = os.environ['SYNO_OTP']
+if 'SYNO_OTP' in os.environ:
+    syno_otp = os.environ['SYNO_OTP']
 
 config_file = '/bot/syno_cam_config.json'
 arr_cam_move = {}
 
+# Send Telegram message
+def send_cammessage(message):
+    tg_bot.send_message(chat_id, message)
+    
+def send_camvideo(videofile, cam_id):
+    mycaption = "Camera " + str(cam_load[cam_id]['SynoName'])
+    video = open(videofile, 'rb')
+    tg_bot.send_video(chat_id, video, None, None, None, None, mycaption)
+
+
 def firstStart():
     # With OTP code
-    if syno_otp != '0':
+    if 'syno_otp' in locals():
         sid = requests.get(syno_url,
             params={'api': 'SYNO.API.Auth', 'version': '7', 'method': 'login',
                     'account': syno_login, 'passwd': syno_pass, 'otp_code': syno_otp,
@@ -68,7 +103,7 @@ def firstStart():
             params={'api': 'SYNO.API.Auth', 'version': '7', 'method': 'login',
                     'account': syno_login, 'passwd': syno_pass,
                     'session': 'SurveillanceStation', 'format': 'cookie12'}).json()['data']['sid']
-    print(sid)            
+    log.info(sid)            
     # Cameras config
     cameras = requests.get(syno_url,
         params={'api': 'SYNO.SurveillanceStation.Camera',
@@ -85,28 +120,28 @@ def firstStart():
                         + ' IP: ' + cameras['data']['cameras'][i]['ip']
                         + ' SynoName: ' + cameras['data']['cameras'][i]['newName']
                         + ' Model: ' + cameras['data']['cameras'][i]['model']
-                        + ' Vendor: ' + cameras['data']['cameras'][i]['vendor'] + '%0A')
-    print(cam_conf_text)
+                        + ' Vendor: ' + cameras['data']['cameras'][i]['vendor'] + '\n')
+    log.info(cam_conf_text)
     data['SynologyAuthSid'] = sid
 
     with open(config_file, "w") as f:
         json.dump(data, f)
-    print("Config saved successfully.")
+    log.info("Config saved successfully.")
     # Send Telegram Cameras config
-    mycaption = "Cameras config:%0A" + cam_conf_text
-    requests.post(f"https://api.telegram.org/{token}/sendMessage?chat_id={chat_id}&text={mycaption}")
+    mycaption = "Cameras config:\n" + cam_conf_text
+    send_cammessage(mycaption)
 
 
 if not pathlib.Path(config_file).is_file():
-    print('Not Found Syno config, need create')
+    log.info('Not Found Syno config, need create')
     firstStart()
 
 if pathlib.Path(config_file).stat().st_size == 0:
-    print('Syno config is empty.')
+    log.info('Syno config is empty.')
     firstStart()
 
 if pathlib.Path(config_file).stat().st_size == 0:
-    print('Syno config always is empty. Exit.')
+    log.info('Syno config always is empty. Exit.')
     sys.exit()
 
 with open(config_file) as f:
@@ -129,20 +164,6 @@ def get_last_video(video_id, offset):
                 'method': 'Download', 'offsetTimeMs': offset, 'playTimeMs': '10000','_sid': syno_sid}, allow_redirects=True)
     open('/bot/temp.mp4', 'wb').write(download.content)
     return 
-    
-# Send Telegram message
-def send_cammessage(cam_id):
-    mycaption = "Camera " + str(cam_load[cam_id]['SynoName'])
-    requests.post(f"https://api.telegram.org/{token}/sendMessage?chat_id={chat_id}&text={mycaption}")
-    
-    
-# Send Telegram video
-def send_camvideo(videofile):
-    url = f"https://api.telegram.org/{token}/sendVideo"
-    myfiles = {"chat_id": (None, chat_id), "video": open(videofile, 'rb')}
-    send_video = requests.post(url, files=myfiles).json()
-    print('Send:', send_video['ok'])
-    print('File_Id:', send_video['result']['video']['file_id'])
 
 def get_alarm_camera_state(cam_id):
     take_alarm = requests.get(syno_url,
@@ -158,22 +179,20 @@ def webhookcam():
     global arr_cam_move
     if request.method == 'POST':
        cam_id = request.json['idcam']
-       print("Received IDCam:", cam_id, ',', time.strftime("%d.%m.%Y, %H:%M:%S", time.localtime()))
+       log.info("Received IDCam: "+ cam_id + ', '+ time.strftime("%d.%m.%Y, %H:%M:%S", time.localtime()))
        time.sleep(5)
        last_video_id = get_last_id_video(cam_id)
        if last_video_id != arr_cam_move[cam_id]['old_last_video_id']:
            get_last_video(last_video_id, '0')
-           send_cammessage(cam_id)
+           mycaption = "Camera " + str(cam_load[cam_id]['SynoName'])
+           send_cammessage(mycaption)
            arr_cam_move[cam_id]['old_last_video_id'] = last_video_id
            arr_cam_move[cam_id]['video_offset'] = 0
        else:
            arr_cam_move[cam_id]['video_offset'] += 10000
            get_last_video(last_video_id, str(arr_cam_move[cam_id]['video_offset']))
-       send_camvideo('/bot/temp.mp4')
+       send_camvideo('/bot/temp.mp4',cam_id)
        return 'success', 200
     else:
        abort(400)
        
-if __name__ == '__main__':
-   app.run(host='0.0.0.0', port=synohook_port)
-   
